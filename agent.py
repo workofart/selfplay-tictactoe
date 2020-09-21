@@ -15,6 +15,15 @@ class Agent:
         self.epsilon = epsilon
 
     def update(self, state, action, reward, next_state, done):
+        """ Update the agent's value matrix to more accurately represent the value for the given state-action pair
+
+        Args:
+            state (np.array): the board state
+            action (int): the position of the move
+            reward (int): the reward for taking the action
+            next_state (np.array): the next state after taking the action
+            done (bool): whether the current episode (game) is completed
+        """
         hash_state = self._hashState(state)
 
         if done:
@@ -25,13 +34,37 @@ class Agent:
         self.Q[(hash_state, action)] = self.Q[(hash_state, action)] + self.alpha * advantage
 
     def _hashState(self, state):
+        """ Helper function to hash the state into a hashmap
+
+        Args:
+            state (np.array): the board state
+
+        Returns:
+            string: the string-representation of the current hashed-state
+        """
         return ''.join( [ str(int(i)) for i in np.ravel(state) ] )
 
     def _validPositions(self, state):
+        """ Helper function to get the current valid positions for the given state
+
+        Args:
+            state (np.array): the board state
+
+        Returns:
+            np.array: the indicies (from 1 to 9) of valid positions
+        """
         return np.ravel(np.nonzero(POTENTIAL_POS * np.ravel(state == 0)) + np.array(1))
 
-    # Given a state, return the action and the associated max q-value
+    
     def _maxQValue(self, state):
+        """ Helper function that given a state, return the action and the associated max q-value
+
+        Args:
+            state (np.array): the board state
+
+        Returns:
+            float, int: the maximum q-value for the given state, and the best action to reach that value
+        """
         max_q = float('-inf')
         hash_state = self._hashState(state)
         positions = self._validPositions(state)
@@ -48,6 +81,14 @@ class Agent:
         return max_q, best_action
 
     def act(self, state):
+        """ Perform the epsilon-greedy action for a given state
+
+        Args:
+            state (np.array): the board state
+
+        Returns:
+            int: the action following the epsilon-greedy approach
+        """
         pos = self._validPositions(state)
         if np.random.rand() < self.epsilon:
             return np.random.choice(pos)
@@ -55,10 +96,20 @@ class Agent:
             _, best_action = self._maxQValue(state)
             return best_action
 
-# Plots the data with a horizontal line as the max value in the data
+
 def plot(i, data, final_plot_i = 1000, plot_frequency = 10, player=1):
+    """ Helper function to plot the reward/episode data
+    with a horizontal line as the max value in the data
+
+    Args:
+        i (int): episode
+        data (np.array): the rewards for the given episode, could be smoothed
+        final_plot_i (int, optional): the last plot will be plotted at this episode. Defaults to 1000.
+        plot_frequency (int, optional): how frequent are the data points on the plot. Defaults to 10.
+        player (int, optional): Either 1 or 2. Defaults to 1.
+    """
     if i > 0 and i % plot_frequency == 0:
-        print(f'EP[{i}]: {data[-1]}')
+        print(f'EP[{i}] Avg Reward: {data[-1]}')
     
     if i == final_plot_i:
         plt.plot(data)
@@ -68,6 +119,16 @@ def plot(i, data, final_plot_i = 1000, plot_frequency = 10, player=1):
         plt.show()
 
 def evaluate_greedy_policy(agent, env, niter=100):
+    """ Helper function that evaludates the greedy policy without any training
+
+    Args:
+        agent (agent): tic-tac-toe Agent
+        env (tictactoe_env): the tic-tac-toe game environment
+        niter (int, optional): number of iterations to evaluate for. Defaults to 100.
+
+    Returns:
+        float, float, float: % of "X" win, draw, and "O" win (out of 1)
+    """
     agent.epsilon = 0
     env.win_count['X'] = 0
     env.win_count['O'] = 0
@@ -84,6 +145,18 @@ def evaluate_greedy_policy(agent, env, niter=100):
     return env.win_count['X'] / niter, env.draw_count / niter, env.win_count['O'] / niter
 
 def evaluate_self_play(agent1, agent2, env, niter=100, greedy=True):
+    """ Helper function that evaluates the self-play agents
+
+    Args:
+        agent1 (agent): tic-tac-toe agent that's going first
+        agent2 (agent): tic-tac-toe agent that's going second
+        env (toetactoe_env): the tic-tac-toe game environment
+        niter (int, optional): number of iterations to evaluate for. Defaults to 100.
+        greedy (bool, optional): whether we want randomization, True means no randomization, False otherwise. Defaults to True.
+
+    Returns:
+        float, float, float: % of 1st player win, draw, and 2nd player win (out of 1)
+    """
     if greedy:
         agent1.epsilon = 0
         agent2.epsilon = 0
@@ -234,7 +307,7 @@ def train_original():
     """
     This method trains the agent against the original min-max opponent
     """
-    EPISODES = 1000
+    EPISODES = 500
     STATS_EVERY_N_EP = 100
     PLOT_SMOOTH = 20
     env = TicTacToe()
@@ -270,7 +343,7 @@ def train_original():
     save_model(agent, 'minmax_trained_{}ep'.format(EPISODES))
 
     # TEST PHASE
-    print('\n\nEvaluating learnt policy')
+    print('\n\nEvaluating learnt policy against min-max agent')
     win_frac, tie_frac, lose_frac = evaluate_greedy_policy(agent, env, 1)
     print("Win: {}% | Tie: {}% | Lose: {}%".format(win_frac * 100, tie_frac * 100, lose_frac * 100))
 
