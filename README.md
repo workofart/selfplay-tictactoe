@@ -1,6 +1,6 @@
 ## Tic-Tac-Toe
 
-[Accompanying blog post](http://www.henrypan.com/blog/reinforcement-learning/2019/12/06/tic-tac-toe-selfplay.html)
+[Accompanying blog post](https://www.henrypan.com/blog/2019-12-06-tic-tac-toe-selfplay/)
 
 ## To run:
 ```
